@@ -16,8 +16,8 @@
 
 package com.google.errorprone;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.BugPattern.SeverityLevel;
+import com.google.errorprone.BugPattern.Suppressibility;
 import com.google.errorprone.matchers.Suppressible;
 import com.google.errorprone.util.ASTHelpers;
 import com.sun.tools.javac.code.Attribute;
@@ -38,9 +38,6 @@ import java.util.Set;
  * AST. 2) A set of all custom suppression annotations down this path of the AST.
  */
 public class SuppressionHelper {
-
-  private static final ImmutableSet<String> GENERATED_ANNOTATIONS =
-      ImmutableSet.of("javax.annotation.Generated", "javax.annotation.processing.Generated");
 
   /** The set of custom suppression annotations that this SuppressionHelper should look for. */
   private final Set<Class<? extends Annotation>> customSuppressionAnnotations;
@@ -102,7 +99,8 @@ public class SuppressionHelper {
       boolean inGeneratedCode,
       VisitorState state) {
 
-    boolean newInGeneratedCode = inGeneratedCode || isGenerated(sym, state);
+    boolean newInGeneratedCode =
+        inGeneratedCode || ASTHelpers.hasAnnotation(sym, "javax.annotation.Generated", state);
 
     /** Handle custom suppression annotations. */
     Set<Class<? extends Annotation>> newCustomSuppressions = null;
@@ -163,23 +161,20 @@ public class SuppressionHelper {
       SeverityLevel severityLevel,
       boolean inGeneratedCode,
       boolean disableWarningsInGeneratedCode) {
+    if (suppressible.suppressibility() == Suppressibility.UNSUPPRESSIBLE) {
+      return false;
+    }
     if (inGeneratedCode && disableWarningsInGeneratedCode && severityLevel != SeverityLevel.ERROR) {
       return true;
     }
-    if (suppressible.supportsSuppressWarnings()
-        && !Collections.disjoint(suppressible.allNames(), suppressionsOnCurrentPath)) {
-      return true;
+    switch (suppressible.suppressibility()) {
+      case CUSTOM_ANNOTATION:
+        return !Collections.disjoint(
+            suppressible.customSuppressionAnnotations(), customSuppressionsOnCurrentPath);
+      case SUPPRESS_WARNINGS:
+        return !Collections.disjoint(suppressible.allNames(), suppressionsOnCurrentPath);
+      default:
+        throw new IllegalStateException("No case for: " + suppressible.suppressibility());
     }
-    return !Collections.disjoint(
-        suppressible.customSuppressionAnnotations(), customSuppressionsOnCurrentPath);
-  }
-
-  private static boolean isGenerated(Symbol sym, VisitorState state) {
-    for (String annotation : GENERATED_ANNOTATIONS) {
-      if (ASTHelpers.hasAnnotation(sym, annotation, state)) {
-        return true;
-      }
-    }
-    return false;
   }
 }

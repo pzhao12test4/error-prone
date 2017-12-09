@@ -16,13 +16,11 @@
 
 package com.google.errorprone.util;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.errorprone.matchers.JUnitMatchers.JUNIT4_RUN_WITH_ANNOTATION;
 import static com.sun.tools.javac.code.Scope.LookupKind.NON_RECURSIVE;
 
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.dataflow.nullnesspropagation.Nullness;
 import com.google.errorprone.dataflow.nullnesspropagation.NullnessAnalysis;
@@ -48,8 +46,6 @@ import com.sun.source.tree.Tree.Kind;
 import com.sun.source.tree.TypeParameterTree;
 import com.sun.source.tree.VariableTree;
 import com.sun.source.util.TreePath;
-import com.sun.tools.javac.code.Attribute;
-import com.sun.tools.javac.code.Attribute.Compound;
 import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Scope;
 import com.sun.tools.javac.code.Symbol;
@@ -100,10 +96,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.type.TypeKind;
-import javax.lang.model.util.SimpleAnnotationValueVisitor8;
 
 /** This class contains utility methods to work with the javac AST. */
 public class ASTHelpers {
@@ -148,8 +142,8 @@ public class ASTHelpers {
   }
 
   /**
-   * Gets the symbol declared by a tree. Returns null if {@code tree} does not declare a symbol or
-   * is null.
+   * Gets the symbol declared by a tree. Returns null if this tree does not declare a symbol, if
+   * {@code tree} is null.
    */
   public static Symbol getDeclaredSymbol(Tree tree) {
     if (tree instanceof AnnotationTree) {
@@ -468,8 +462,7 @@ public class ASTHelpers {
           && !sym.isStatic()
           && ((sym.flags() & Flags.SYNTHETIC) == 0)
           && sym.name.contentEquals(methodSymbol.name)
-          && methodSymbol.overrides(
-              sym, (TypeSymbol) methodSymbol.owner, types, /* checkResult= */ true)) {
+          && methodSymbol.overrides(sym, (TypeSymbol) methodSymbol.owner, types, true)) {
         return (MethodSymbol) sym;
       }
     }
@@ -477,7 +470,7 @@ public class ASTHelpers {
   }
 
   public static Set<MethodSymbol> findSuperMethods(MethodSymbol methodSymbol, Types types) {
-    return findSuperMethods(methodSymbol, types, /* skipInterfaces= */ false)
+    return findSuperMethods(methodSymbol, types, false)
         .collect(Collectors.toCollection(LinkedHashSet::new));
   }
 
@@ -486,7 +479,7 @@ public class ASTHelpers {
    * method}.
    */
   public static Optional<MethodSymbol> findSuperMethod(MethodSymbol methodSymbol, Types types) {
-    return findSuperMethods(methodSymbol, types, /* skipInterfaces= */ true).findFirst();
+    return findSuperMethods(methodSymbol, types, true).findFirst();
   }
 
   private static Stream<MethodSymbol> findSuperMethods(
@@ -540,8 +533,7 @@ public class ASTHelpers {
     Name annotationName = state.getName(annotationClass);
     Symbol annotationSym;
     synchronized (state.context) {
-      annotationSym =
-          state.getSymtab().enterClass(state.inferModule(annotationName), annotationName);
+      annotationSym = state.getSymtab().enterClass(state.getSymtab().java_base, annotationName);
     }
     try {
       annotationSym.complete();
@@ -948,53 +940,5 @@ public class ASTHelpers {
     } finally {
       log.popDiagnosticHandler(handler);
     }
-  }
-
-  /**
-   * Returns the values of the given symbol's {@code javax.annotation.Generated} or {@code
-   * javax.annotation.processing.Generated} annotation, if present.
-   */
-  public static ImmutableSet<String> getGeneratedBy(ClassSymbol symbol, VisitorState state) {
-    checkNotNull(symbol);
-    Optional<Compound> c =
-        Stream.of("javax.annotation.Generated", "javax.annotation.processing.Generated")
-            .map(state::getSymbolFromString)
-            .filter(a -> a != null)
-            .map(symbol::attribute)
-            .filter(a -> a != null)
-            .findFirst();
-    if (!c.isPresent()) {
-      return ImmutableSet.of();
-    }
-    Optional<Attribute> values =
-        c.get()
-            .getElementValues()
-            .entrySet()
-            .stream()
-            .filter(e -> e.getKey().getSimpleName().contentEquals("value"))
-            .map(e -> e.getValue())
-            .findAny();
-    if (!values.isPresent()) {
-      return ImmutableSet.of();
-    }
-    ImmutableSet.Builder<String> suppressions = ImmutableSet.builder();
-    values
-        .get()
-        .accept(
-            new SimpleAnnotationValueVisitor8<Void, Void>() {
-              @Override
-              public Void visitString(String s, Void aVoid) {
-                suppressions.add(s);
-                return super.visitString(s, aVoid);
-              }
-
-              @Override
-              public Void visitArray(List<? extends AnnotationValue> vals, Void aVoid) {
-                vals.stream().forEachOrdered(v -> v.accept(this, null));
-                return super.visitArray(vals, aVoid);
-              }
-            },
-            null);
-    return suppressions.build();
   }
 }

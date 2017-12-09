@@ -40,8 +40,6 @@ import com.sun.tools.javac.code.Symbol.CompletionFailure;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import com.sun.tools.javac.code.Symbol.VarSymbol;
 import com.sun.tools.javac.code.Type;
-import com.sun.tools.javac.comp.Check;
-import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 import java.util.List;
 import java.util.Optional;
 
@@ -120,9 +118,7 @@ abstract class Parameter {
     try {
       return state.getTypes().isAssignable(type(), target.type());
     } catch (CompletionFailure e) {
-      // Report completion errors to avoid e.g. https://github.com/bazelbuild/bazel/issues/4105
-      Check.instance(state.context)
-          .completionError((DiagnosticPosition) state.getPath().getLeaf(), e);
+      // bail out if necessary symbols to do the subtype check are not on the classpath
       return false;
     }
   }

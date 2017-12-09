@@ -13,23 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.errorprone.annotations.concurrent;
 
+package android.support.annotation;
+
+import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
+import static java.lang.annotation.ElementType.CONSTRUCTOR;
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PACKAGE;
+import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.CLASS;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-/** Indicates that the annotated element should be used only while holding the specified lock. */
-@Target({FIELD, METHOD})
 @Retention(CLASS)
-public @interface GuardedBy {
-  /**
-   * The lock that should be held, specified in the format <a
-   * href="http://jcip.net/annotations/doc/net/jcip/annotations/GuardedBy.html">given in Java
-   * Concurrency in Practice</a>.
-   */
-  String value();
+@Target({ANNOTATION_TYPE, TYPE, METHOD, CONSTRUCTOR, FIELD, PACKAGE})
+public @interface RestrictTo {
+
+  /** The scope to which usage should be restricted. */
+  Scope[] value();
+
+  enum Scope {
+    LIBRARY,
+    LIBRARY_GROUP,
+    @Deprecated
+    GROUP_ID,
+    TESTS,
+    SUBCLASSES,
+  }
 }

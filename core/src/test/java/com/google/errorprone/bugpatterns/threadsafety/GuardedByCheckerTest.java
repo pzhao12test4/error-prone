@@ -253,20 +253,6 @@ public class GuardedByCheckerTest {
   }
 
   @Test
-  public void testErrorProneAnnotation() throws Exception {
-    compilationHelper
-        .addSourceLines(
-            "threadsafety/Test.java",
-            "package threadsafety;",
-            "import com.google.errorprone.annotations.concurrent.GuardedBy;",
-            "class Test {",
-            "  // BUG: Diagnostic contains: Invalid @GuardedBy expression",
-            "  @GuardedBy(\"foo\") int y;",
-            "}")
-        .doTest();
-  }
-
-  @Test
   public void testUnheldInstanceGuard() throws Exception {
     compilationHelper
         .addSourceLines(

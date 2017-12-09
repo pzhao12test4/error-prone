@@ -242,9 +242,7 @@ public final class RestrictToEnforcer extends BugChecker
 
   private static boolean compilingSupportLibrary(VisitorState state) {
     ExpressionTree tree = state.getPath().getCompilationUnit().getPackageName();
-    return tree != null
-        && (tree.toString().startsWith("android.support")
-            || tree.toString().startsWith("android.arch"));
+    return tree != null && tree.toString().startsWith("android.support");
   }
 
   private static boolean checkEnclosingTypes(Type type, VisitorState state) {

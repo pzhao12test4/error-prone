@@ -88,8 +88,7 @@ class TrustingNullnessPropagation extends NullnessPropagationTransfer {
   static Nullness nullnessFromAnnotations(Element element) {
     for (AnnotationMirror anno : element.getAnnotationMirrors()) {
       // Check for Nullable like ReturnValueIsNonNull
-      if (anno.getAnnotationType().toString().endsWith(".Nullable")
-          || anno.getAnnotationType().toString().endsWith(".NullableDecl")) {
+      if (anno.getAnnotationType().toString().endsWith(".Nullable")) {
         return Nullness.NULLABLE;
       }
     }
@@ -106,7 +105,7 @@ class TrustingNullnessPropagation extends NullnessPropagationTransfer {
     @Override
     public boolean apply(MethodInfo input) {
       for (String annotation : input.annotations()) {
-        if (annotation.endsWith(".Nullable") || annotation.endsWith(".NullableDecl")) {
+        if (annotation.endsWith(".Nullable")) {
           return false;
         }
       }

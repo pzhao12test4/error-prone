@@ -187,7 +187,7 @@ class NullnessPropagationTransfer extends AbstractNullnessPropagationTransfer
       // Any method explicitly annotated with @Nullable is assumed to be capable of returning
       // null.
       for (String annotation : methodInfo.annotations()) {
-        if (annotation.endsWith(".Nullable") || annotation.endsWith(".NullableDecl")) {
+        if (annotation.endsWith(".Nullable")) {
           return false;
         }
       }
@@ -375,12 +375,7 @@ class NullnessPropagationTransfer extends AbstractNullnessPropagationTransfer
       LocalVariableUpdates thenUpdates,
       LocalVariableUpdates elseUpdates) {
     handleEqualityComparison(
-        /* equalTo= */ true,
-        node.getLeftOperand(),
-        node.getRightOperand(),
-        inputs,
-        thenUpdates,
-        elseUpdates);
+        true, node.getLeftOperand(), node.getRightOperand(), inputs, thenUpdates, elseUpdates);
   }
 
   @Override
@@ -390,12 +385,7 @@ class NullnessPropagationTransfer extends AbstractNullnessPropagationTransfer
       LocalVariableUpdates thenUpdates,
       LocalVariableUpdates elseUpdates) {
     handleEqualityComparison(
-        /* equalTo= */ false,
-        node.getLeftOperand(),
-        node.getRightOperand(),
-        inputs,
-        thenUpdates,
-        elseUpdates);
+        false, node.getLeftOperand(), node.getRightOperand(), inputs, thenUpdates, elseUpdates);
   }
 
   @Override

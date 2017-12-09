@@ -24,30 +24,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** {@link DateFormatConstant}Test */
+/** {@link java.text.SimpleDateFormat}Test */
 @RunWith(JUnit4.class)
-public class DateFormatConstantTest {
-  @Test
-  public void positive() throws IOException {
-    CompilationTestHelper.newInstance(DateFormatConstant.class, getClass())
-        .addSourceLines(
-            "Test.java",
-            "import java.text.DateFormat;",
-            "import java.text.SimpleDateFormat;",
-            "class Test {",
-            "  // BUG: Diagnostic contains:",
-            "  private static final DateFormat DATE_FORMAT1 =",
-            "    new SimpleDateFormat(\"yyyy-MM-dd HH:mm\");",
-            "  // BUG: Diagnostic contains:",
-            "  private static final SimpleDateFormat DATE_FORMAT2 =",
-            "    new SimpleDateFormat(\"yyyy-MM-dd HH:mm\");",
-            "}")
-        .doTest();
-  }
-
+public class SimpleDateFormatConstantTest {
   @Test
   public void negative() throws IOException {
-    CompilationTestHelper.newInstance(DateFormatConstant.class, getClass())
+    CompilationTestHelper.newInstance(SimpleDateFormatConstant.class, getClass())
         .addSourceLines(
             "Test.java",
             "import java.text.SimpleDateFormat;",
@@ -73,14 +55,13 @@ public class DateFormatConstantTest {
 
   @Test
   public void threadLocalFix() throws IOException {
-    BugCheckerRefactoringTestHelper.newInstance(new DateFormatConstant(), getClass())
+    BugCheckerRefactoringTestHelper.newInstance(new SimpleDateFormatConstant(), getClass())
         .addInputLines(
             "in/Test.java",
             "import java.text.SimpleDateFormat;",
-            "import java.text.DateFormat;",
             "import java.util.Date;",
             "class Test {",
-            "  private static final DateFormat DATE_FORMAT =",
+            "  private static final SimpleDateFormat DATE_FORMAT =",
             "    new SimpleDateFormat(\"yyyy-MM-dd HH:mm\");",
             "  static String f(Date d) {",
             "    return DATE_FORMAT.format(d);",
@@ -89,10 +70,9 @@ public class DateFormatConstantTest {
         .addOutputLines(
             "out/Test.java",
             "import java.text.SimpleDateFormat;",
-            "import java.text.DateFormat;",
             "import java.util.Date;",
             "class Test {",
-            "  private static final ThreadLocal<DateFormat> DATE_FORMAT = ",
+            "  private static final ThreadLocal<SimpleDateFormat> DATE_FORMAT = ",
             "    ThreadLocal.withInitial(() -> new SimpleDateFormat(\"yyyy-MM-dd HH:mm\"));",
             "  static String f(Date d) {",
             "    return DATE_FORMAT.get().format(d);",
@@ -103,14 +83,13 @@ public class DateFormatConstantTest {
 
   @Test
   public void lowerCamelCaseFix() throws IOException {
-    BugCheckerRefactoringTestHelper.newInstance(new DateFormatConstant(), getClass())
+    BugCheckerRefactoringTestHelper.newInstance(new SimpleDateFormatConstant(), getClass())
         .addInputLines(
             "in/Test.java",
             "import java.text.SimpleDateFormat;",
-            "import java.text.DateFormat;",
             "import java.util.Date;",
             "class Test {",
-            "  private static final DateFormat DATE_FORMAT =",
+            "  private static final SimpleDateFormat DATE_FORMAT =",
             "    new SimpleDateFormat(\"yyyy-MM-dd HH:mm\");",
             "  static String f(Date d) {",
             "    return DATE_FORMAT.format(d);",
@@ -119,10 +98,9 @@ public class DateFormatConstantTest {
         .addOutputLines(
             "out/Test.java",
             "import java.text.SimpleDateFormat;",
-            "import java.text.DateFormat;",
             "import java.util.Date;",
             "class Test {",
-            "  private static final DateFormat dateFormat =",
+            "  private static final SimpleDateFormat dateFormat =",
             "    new SimpleDateFormat(\"yyyy-MM-dd HH:mm\");",
             "  static String f(Date d) {",
             "    return dateFormat.format(d);",
